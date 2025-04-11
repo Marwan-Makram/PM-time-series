@@ -1,0 +1,12 @@
+name: predictive-maintenance
+conda_env: conda.yaml
+
+entry_points:
+  forest:
+    command: "python rf_script.py"
+
+  LSTM:
+    command: "python LSTM_script.py"
+
+  xgboost:
+    command: "python XGB_scripts.py"
