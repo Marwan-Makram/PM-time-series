@@ -23,6 +23,7 @@ Release/
 # =========================
 # Ignore only MLflow model.pkl files
 # =========================
+*.pkl
 mlflow/mlruns/**/artifacts/model/model.pkl
 mlflow/mlruns/110777770847680835/bb1f56b141354799b46f90dc06e132c4/artifacts/model/model.pkl
 
