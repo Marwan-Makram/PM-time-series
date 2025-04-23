@@ -1,0 +1,15 @@
+artifact_uri: file:///H:/Study/DEPI/final%20project/projectMlflow/PM-time-series/mlflow/mlruns/110777770847680835/666a9db186664cb4a16288ad4d4375aa/artifacts
+end_time: 1745423299920
+entry_point_name: ''
+experiment_id: '110777770847680835'
+lifecycle_stage: active
+run_id: 666a9db186664cb4a16288ad4d4375aa
+run_name: illustrious-eel-349
+run_uuid: 666a9db186664cb4a16288ad4d4375aa
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1745423283756
+status: 3
+tags: []
+user_id: marwan

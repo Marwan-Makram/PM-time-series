@@ -1,161 +1,131 @@
-import mlflow
+import os
+import argparse
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import mlflow
+import mlflow.keras
+from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import mean_absolute_error
-import tensorflow as tf
-from tensorflow.keras.callbacks import EarlyStopping
-
-# Initialize MLflow
-mlflow.set_experiment("predictive-maintenance")
-mlflow.tensorflow.autolog()
+from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras.losses import MeanAbsoluteError
+from tensorflow.keras.metrics import MeanSquaredError
 
 
-def create_sequences_all(df, features, target, window_size):
-    """Create sequences for all engines in the dataframe."""
+def preprocess_data(path):
+    df = pd.read_csv(path)
+    df['flight_datetime_c'] = pd.to_datetime(
+        df['flight_datetime'], format='%d-%m-%y %H:%M', dayfirst=True)
+
+    df['hour'] = df['flight_datetime_c'].dt.hour
+    df['month'] = df['flight_datetime_c'].dt.month
+    df['hour_sin'] = np.sin(2 * np.pi * df['hour'] / 24)
+    df['hour_cos'] = np.cos(2 * np.pi * df['hour'] / 24)
+    df['month_sin'] = np.sin(2 * np.pi * df['month'] / 12)
+    df['month_cos'] = np.cos(2 * np.pi * df['month'] / 12)
+    df.drop(columns=['hour', 'month'], inplace=True)
+    df = pd.get_dummies(df, columns=["flight_phase"])
+
+    sensor_cols = ['eposition', 'egt_probe_average', 'fuel_flw', 'core_spd', 'zpn12p',
+                   'vib_n1_1_bearing', 'vib_n2_1_bearing', 'vib_n2_turbine_frame',
+                   'hour_sin', 'hour_cos', 'month_sin', 'month_cos'] + \
+        [col for col in df.columns if col.startswith("flight_phase_")]
+
+    scaler = MinMaxScaler()
+    df[sensor_cols] = scaler.fit_transform(df[sensor_cols])
+    return df, sensor_cols
+
+
+def create_lstm_windows(data, sensor_cols, window_size=15):
     X, y = [], []
-    for eng in df['eng_number'].unique():
-        engine_data = df[df['eng_number'] == eng]
-        # Ensure engine has enough data points
-        if len(engine_data) <= window_size:
-            continue
-        for i in range(len(engine_data) - window_size):
-            X.append(engine_data[features].iloc[i:i +
-                     window_size].values.astype(np.float32))
-            y.append(engine_data[target].iloc[i + window_size])
+    for engine_id in data['eng_number'].unique():
+        engine_df = data[data['eng_number'] ==
+                         engine_id].reset_index(drop=True)
+        for i in range(len(engine_df) - window_size):
+            window = engine_df.loc[i:i+window_size-1,
+                                   sensor_cols].values.astype(np.float32)
+            label = engine_df.loc[i + window_size - 1, 'RUL']
+            X.append(window)
+            y.append(label)
     return np.array(X), np.array(y)
 
 
-def build_model(window_size, n_features):
-    """Build and compile the Conv1D-LSTM model."""
-    model = tf.keras.models.Sequential([
-        tf.keras.Input(shape=(window_size, n_features)),
-        tf.keras.layers.Conv1D(
-            64, 3, strides=1, activation="relu", padding='causal'),
-        tf.keras.layers.LSTM(64, return_sequences=True),
-        tf.keras.layers.LSTM(64),
-        tf.keras.layers.Dense(30, activation="relu"),
-        tf.keras.layers.Dense(10, activation="relu"),
-        tf.keras.layers.Dense(1)
-    ])
-    model.compile(optimizer='adam', loss='mse')
+def build_model(input_shape):
+    model = Sequential()
+    model.add(LSTM(64, return_sequences=True, input_shape=input_shape))
+    model.add(Dropout(0.3))
+    model.add(LSTM(64, return_sequences=False))
+    model.add(Dropout(0.2))
+    model.add(Dense(32, activation='relu'))
+    model.add(Dense(1))
+    model.compile(optimizer='adam', loss=MeanAbsoluteError(),
+                  metrics=[MeanSquaredError()])
     return model
 
 
-def main():
-    # Parameters
-    WINDOW_SIZE = 10
-    BATCH_SIZE = 64
-    EPOCHS = 100
+def main(data_path, epochs, batch_size):
+    df, sensor_cols = preprocess_data(data_path)
+    X, y = create_lstm_windows(df, sensor_cols)
 
+    X_train, X_temp, y_train, y_temp = train_test_split(
+        X, y, test_size=0.2, random_state=42, shuffle=True)
+    X_val, X_test, y_val, y_test = train_test_split(
+        X_temp, y_temp, test_size=0.5, random_state=42)
+
+    mlflow.set_experiment("predictive-maintenance")
     with mlflow.start_run():
-        # Load and preprocess data
-        df = pd.read_csv('../Data/engines2_data_cleaned_no_outliers.csv')
+        model = build_model(input_shape=(X.shape[1], X.shape[2]))
 
-        if 'timestamp' in df.columns:
-            df.drop(columns=['timestamp'], inplace=True)
-
-        df = pd.get_dummies(df, columns=['flight_phase'], drop_first=True)
-
-        # Define target and features
-        target = 'RUL'
-        non_features = ['eng_number', target]
-        features = [col for col in df.columns
-                    if col not in non_features and pd.api.types.is_numeric_dtype(df[col])]
-
-        # Split engines into train/val/test
-        engines = df['eng_number'].unique()
-        np.random.seed(42)
-        np.random.shuffle(engines)
-        n_engines = len(engines)
-        train_engines = engines[:int(0.8 * n_engines)]
-        val_engines = engines[int(0.8 * n_engines): int(0.9 * n_engines)]
-        test_engines = engines[int(0.9 * n_engines):]
-
-        # Split data into respective dataframes
-        train_df = df[df['eng_number'].isin(train_engines)].copy()
-        val_df = df[df['eng_number'].isin(val_engines)].copy()
-        test_df = df[df['eng_number'].isin(test_engines)].copy()
-
-        # Normalization
-        scaler = MinMaxScaler()
-        train_df[features] = scaler.fit_transform(train_df[features])
-        val_df[features] = scaler.transform(val_df[features])
-        test_df[features] = scaler.transform(test_df[features])
-
-        # Generate sequences
-        X_train, y_train = create_sequences_all(
-            train_df, features, target, WINDOW_SIZE)
-        X_val, y_val = create_sequences_all(
-            val_df, features, target, WINDOW_SIZE)
-        X_test, y_test = create_sequences_all(
-            test_df, features, target, WINDOW_SIZE)
-
-        # Shuffle training data
-        shuffle_idx = np.random.permutation(len(X_train))
-        X_train, y_train = X_train[shuffle_idx], y_train[shuffle_idx]
-
-        # Build model
-        model = build_model(WINDOW_SIZE, len(features))
-
-        # Log parameters
-        mlflow.log_params({
-            "window_size": WINDOW_SIZE,
-            "batch_size": BATCH_SIZE,
-            "epochs": EPOCHS,
-            "features": features,
-            "model_type": "Conv1D-LSTM",
-            "n_train_engines": len(train_engines),
-            "n_val_engines": len(val_engines),
-            "n_test_engines": len(test_engines)
-        })
-
-        # Training callbacks
         early_stop = EarlyStopping(
-            monitor='val_loss', patience=10, restore_best_weights=True)
+            monitor='val_loss', patience=15, restore_best_weights=True)
+        checkpoint_path = "best_lstm_model.keras"
+        checkpoint_cb = ModelCheckpoint(
+            checkpoint_path, monitor='val_loss', save_best_only=True, mode='min', verbose=1)
 
-        # Train model
-        history = model.fit(
-            X_train, y_train,
-            validation_data=(X_val, y_val),
-            epochs=EPOCHS,
-            batch_size=BATCH_SIZE,
-            callbacks=[early_stop],
-            verbose=1
-        )
+        history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
+                            validation_data=(X_val, y_val), callbacks=[early_stop, checkpoint_cb], verbose=1)
 
-        # Evaluate on test set
-        test_loss = model.evaluate(X_test, y_test, verbose=0)
-        y_pred = model.predict(X_test)
-        mae = mean_absolute_error(y_test, y_pred)
-        mlflow.log_metrics({"test_loss": test_loss, "test_mae": mae})
-
-        # Plotting
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
-
-        # Training history
-        ax1.plot(history.history['loss'], label='Train Loss')
-        ax1.plot(history.history['val_loss'], label='Val Loss')
-        ax1.set_title('Training History')
-        ax1.legend()
-
-        # Prediction samples
-        sample_indices = np.arange(50)
-        y_true_sample = y_test[:50]
-        y_pred_sample = y_pred[:50].flatten()
-        ax2.plot(sample_indices, y_true_sample, 'o-', label='True RUL')
-        ax2.plot(sample_indices, y_pred_sample, 'x-', label='Predicted RUL')
-        ax2.set_title('True vs. Predicted RUL (First 50 Test Samples)')
-        ax2.legend()
-
-        mlflow.log_figure(fig, "training_results.png")
+        # Plot and log training history
+        plt.plot(history.history['loss'], label='Train Loss')
+        plt.plot(history.history['val_loss'], label='Val Loss')
+        plt.title('Training vs Validation Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('MAE Loss')
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig("training_plot.png")
+        mlflow.log_artifact("training_plot.png")
         plt.close()
 
-        # Save model
-        mlflow.tensorflow.log_model(model, "model")
+        best_model = load_model(checkpoint_path)
+
+        # Validation
+        y_pred_val = best_model.predict(X_val).flatten()
+        val_mae = mean_absolute_error(y_val, y_pred_val)
+        val_r2 = r2_score(y_val, y_pred_val)
+
+        # Test
+        y_pred_test = best_model.predict(X_test).flatten()
+        test_mae = mean_absolute_error(y_test, y_pred_test)
+        test_r2 = r2_score(y_test, y_pred_test)
+
+        mlflow.log_params({'epochs': epochs, 'batch_size': batch_size})
+        mlflow.log_metrics({
+            'val_mae': val_mae, 'val_r2': val_r2,
+            'test_mae': test_mae, 'test_r2': test_r2
+        })
+
+        mlflow.keras.log_model(best_model, artifact_path="models")
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_path', type=str,
+                        default='../Data/engines2_data_cleaned_no_outliers_lstm.csv')
+    parser.add_argument('--epochs', type=int, default=350)
+    parser.add_argument('--batch_size', type=int, default=64)
+    args = parser.parse_args()
+    main(args.data_path, args.epochs, args.batch_size)
