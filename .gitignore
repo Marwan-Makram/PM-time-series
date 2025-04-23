@@ -1,5 +1,42 @@
-"mlflow\mlruns\522351272069194837\f8bd4a374988471f9ea8e4f3cc83e66d\artifacts\model\model.pkl" 
-"mlflow/mlruns/**/artifacts/model/model.pkl"
+# =========================
+# Visual Studio Build Files
+# =========================
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.VC.db
+*.VC.opendb
 
+# Intermediate & Build output
+x64/
+Debug/
+Release/
+*.obj
+*.exe
+*.log
+*.pdb
+*.ipch
+*.cache
 
+# =========================
+# Ignore only MLflow model.pkl files
+# =========================
+mlflow/mlruns/**/artifacts/model/model.pkl
 
+# =========================
+# OS / Editor Junk
+# =========================
+.DS_Store
+Thumbs.db
+*.swp
+
+# =========================
+# Python (if used with MLflow)
+# =========================
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+.venv/
