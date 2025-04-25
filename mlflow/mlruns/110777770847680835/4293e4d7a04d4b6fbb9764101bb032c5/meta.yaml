@@ -1,0 +1,15 @@
+artifact_uri: file:///H:/Study/DEPI/final%20project/projectMlflow/PM-time-series/mlflow/mlruns/110777770847680835/4293e4d7a04d4b6fbb9764101bb032c5/artifacts
+end_time: 1745540155745
+entry_point_name: ''
+experiment_id: '110777770847680835'
+lifecycle_stage: active
+run_id: 4293e4d7a04d4b6fbb9764101bb032c5
+run_name: righteous-flea-351
+run_uuid: 4293e4d7a04d4b6fbb9764101bb032c5
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1745539609789
+status: 3
+tags: []
+user_id: marwan

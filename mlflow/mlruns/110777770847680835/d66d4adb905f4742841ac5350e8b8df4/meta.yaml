@@ -1,0 +1,16 @@
+artifact_uri: file:///H:/Study/DEPI/final%20project/projectMlflow/PM-time-series/mlflow/mlruns/110777770847680835/d66d4adb905f4742841ac5350e8b8df4/artifacts
+deleted_time: 1745536494199
+end_time: 1745536158847
+entry_point_name: ''
+experiment_id: '110777770847680835'
+lifecycle_stage: deleted
+run_id: d66d4adb905f4742841ac5350e8b8df4
+run_name: masked-mule-204
+run_uuid: d66d4adb905f4742841ac5350e8b8df4
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1745536158792
+status: 4
+tags: []
+user_id: marwan

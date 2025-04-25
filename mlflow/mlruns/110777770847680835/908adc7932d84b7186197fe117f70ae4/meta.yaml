@@ -1,0 +1,15 @@
+artifact_uri: file:///H:/Study/DEPI/final%20project/projectMlflow/PM-time-series/mlflow/mlruns/110777770847680835/908adc7932d84b7186197fe117f70ae4/artifacts
+end_time: 1745536475497
+entry_point_name: ''
+experiment_id: '110777770847680835'
+lifecycle_stage: active
+run_id: 908adc7932d84b7186197fe117f70ae4
+run_name: delightful-owl-390
+run_uuid: 908adc7932d84b7186197fe117f70ae4
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1745536461878
+status: 3
+tags: []
+user_id: marwan

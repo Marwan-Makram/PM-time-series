@@ -1,0 +1,16 @@
+artifact_uri: file:///H:/Study/DEPI/final%20project/projectMlflow/PM-time-series/mlflow/mlruns/110777770847680835/a10a28ef4efe4b1a802c5b7d1eb1b694/artifacts
+deleted_time: 1745539041504
+end_time: 1745538933127
+entry_point_name: ''
+experiment_id: '110777770847680835'
+lifecycle_stage: deleted
+run_id: a10a28ef4efe4b1a802c5b7d1eb1b694
+run_name: clumsy-rook-783
+run_uuid: a10a28ef4efe4b1a802c5b7d1eb1b694
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1745538928813
+status: 4
+tags: []
+user_id: marwan

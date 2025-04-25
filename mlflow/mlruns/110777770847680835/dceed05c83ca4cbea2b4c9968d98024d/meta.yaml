@@ -1,0 +1,15 @@
+artifact_uri: file:///H:/Study/DEPI/final%20project/projectMlflow/PM-time-series/mlflow/mlruns/110777770847680835/dceed05c83ca4cbea2b4c9968d98024d/artifacts
+end_time: 1745527373845
+entry_point_name: ''
+experiment_id: '110777770847680835'
+lifecycle_stage: active
+run_id: dceed05c83ca4cbea2b4c9968d98024d
+run_name: fearless-cat-409
+run_uuid: dceed05c83ca4cbea2b4c9968d98024d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1745527198302
+status: 3
+tags: []
+user_id: marwan

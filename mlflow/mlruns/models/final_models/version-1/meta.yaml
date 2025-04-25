@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1745538870690
+current_stage: None
+description: ''
+last_updated_timestamp: 1745538870690
+name: final_models
+run_id: 908adc7932d84b7186197fe117f70ae4
+run_link: ''
+source: file:///H:/Study/DEPI/final%20project/projectMlflow/PM-time-series/mlflow/mlruns/110777770847680835/908adc7932d84b7186197fe117f70ae4/artifacts/model
+status: READY
+status_message: null
+storage_location: file:///H:/Study/DEPI/final%20project/projectMlflow/PM-time-series/mlflow/mlruns/110777770847680835/908adc7932d84b7186197fe117f70ae4/artifacts/model
+user_id: null
+version: 1

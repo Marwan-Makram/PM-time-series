@@ -1,0 +1,16 @@
+artifact_uri: file:///H:/Study/DEPI/final%20project/projectMlflow/PM-time-series/mlflow/mlruns/110777770847680835/e72c5a433a8d4619b9b27dd984a9148e/artifacts
+deleted_time: 1745539041504
+end_time: 1745539000989
+entry_point_name: ''
+experiment_id: '110777770847680835'
+lifecycle_stage: deleted
+run_id: e72c5a433a8d4619b9b27dd984a9148e
+run_name: carefree-lark-97
+run_uuid: e72c5a433a8d4619b9b27dd984a9148e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1745538995341
+status: 4
+tags: []
+user_id: marwan
